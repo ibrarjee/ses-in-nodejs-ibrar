@@ -1,0 +1,54 @@
+
+const AWS = require('aws-sdk');
+const SES = new AWS.SES();
+const fs = require('fs');
+
+exports.handler = async (event) => {
+    
+    // const { to, subject, body } = JSON.parse(event.body);
+    const { to,username,sender_name } = JSON.parse(event.body);
+    const subject = "File Sharing Manager - Share New File";
+    //const body = "Testing email body...";
+    var body = fs.readFileSync('./body.html').toString();
+
+    body = body.replace(/{{username}}/g, username);
+    body = body.replace(/{{sender_name}}/g, sender_name);
+    
+    const params = {
+        Destination: {
+            ToAddresses: [to],
+        },
+        Message: {
+            Body: {
+                Html: { Data: body }
+            },
+            Subject: {
+                Data: subject
+            },
+        },
+        Source: 'info@fazconapps.com'
+    };
+
+    try {
+        await SES.sendEmail(params).promise();
+        return {
+            statusCode: 200,
+            body: 'Email sent!'
+        };
+    } catch (e) {
+        console.error(e);
+        return {
+            statusCode: 400,
+            body: 'Sending failed'
+        };
+    }
+    
+    
+    
+    // // TODO implement
+    // const response = {
+    //     statusCode: 200,
+    //     body: JSON.stringify('Hello from Lambda!'),
+    // };
+    // return response;
+};
